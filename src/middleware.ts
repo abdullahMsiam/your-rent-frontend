@@ -1,41 +1,64 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { jwtDecode } from 'jwt-decode';
+
+interface JwtPayload {
+  id?: string;
+  role?: string;
+  exp?: number;
+}
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get('yourrent_token')?.value;
-  const role = request.cookies.get('yourrent_role')?.value;
+  const token = request.cookies.get('accessToken')?.value;
   const { pathname } = request.nextUrl;
 
-  // Protected Dashboard Routes
+  // Protect all Dashboard sub-routes
   if (pathname.startsWith('/dashboard')) {
+    // 1. Missing Token Check
     if (!token) {
-      return NextResponse.redirect(new URL('/auth/login', request.url));
+      return NextResponse.redirect(new URL('/login', request.url));
     }
 
-    if (pathname.startsWith('/dashboard/admin') && role !== 'ADMIN') {
-      return NextResponse.redirect(new URL('/dashboard/tenant', request.url));
-    }
+    try {
+      // 2. Decode JWT Payload
+      const decoded = jwtDecode<JwtPayload>(token);
+      const currentTime = Math.floor(Date.now() / 1000);
 
-    if (pathname.startsWith('/dashboard/landlord') && role !== 'LANDLORD') {
-      return NextResponse.redirect(new URL('/dashboard/tenant', request.url));
-    }
+      // 3. Expiration Check
+      if (decoded.exp && decoded.exp < currentTime) {
+        const response = NextResponse.redirect(new URL('/login', request.url));
+        response.cookies.delete('accessToken');
+        response.cookies.delete('userRole');
+        return response;
+      }
 
-    if (pathname.startsWith('/dashboard/tenant') && role !== 'TENANT') {
-      if (role === 'LANDLORD') return NextResponse.redirect(new URL('/dashboard/landlord', request.url));
-      if (role === 'ADMIN') return NextResponse.redirect(new URL('/dashboard/admin', request.url));
-    }
-  }
+      // 4. Role Guard Validation
+      const userRole = decoded.role;
 
-  // Prevent logged-in users from visiting Auth pages
-  if ((pathname.startsWith('/auth/login') || pathname.startsWith('/auth/register')) && token) {
-    if (role === 'ADMIN') return NextResponse.redirect(new URL('/dashboard/admin', request.url));
-    if (role === 'LANDLORD') return NextResponse.redirect(new URL('/dashboard/landlord', request.url));
-    return NextResponse.redirect(new URL('/dashboard/tenant', request.url));
+      if (pathname.startsWith('/dashboard/landlord') && userRole !== 'LANDLORD') {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      }
+
+      if (pathname.startsWith('/dashboard/admin') && userRole !== 'ADMIN') {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      }
+
+      if (pathname.startsWith('/dashboard/tenant') && userRole !== 'TENANT') {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      }
+
+    } catch (error) {
+      // Malformed or invalid JWT token structure
+      const response = NextResponse.redirect(new URL('/login', request.url));
+      response.cookies.delete('accessToken');
+      response.cookies.delete('userRole');
+      return response;
+    }
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/auth/:path*'],
+  matcher: ['/dashboard/:path*'],
 };

@@ -1,31 +1,53 @@
-import { getAuthToken } from './auth';
+import Cookies from 'js-cookie';
+import { isTokenValid } from './auth';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
-export async function fetcher<T>(
+export async function fetchApi<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const token = getAuthToken();
+  const token = Cookies.get('accessToken');
+
+  // Pre-check token validity on client
+  if (token && !isTokenValid(token)) {
+    Cookies.remove('accessToken', { path: '/' });
+    Cookies.remove('userRole', { path: '/' });
+    if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+      window.location.href = '/login?expired=true';
+    }
+    throw new Error('Session expired. Please log in again.');
+  }
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   };
 
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers['Authorization'] = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const res = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
     headers,
   });
 
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    throw new Error(data.message || data.error || 'An unexpected API error occurred.');
+  // Handle Unauthorized / Forbidden
+  if (res.status === 401 || res.status === 403) {
+    Cookies.remove('accessToken', { path: '/' });
+    Cookies.remove('userRole', { path: '/' });
+    if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+      window.location.href = '/login';
+    }
   }
 
-  return data as T;
+  const jsonResponse = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    throw new Error(jsonResponse.message || jsonResponse.error || 'Request failed');
+  }
+
+  // Returns the entire payload to allow components to handle wrapped or unwrapped data
+  return jsonResponse as T;
 }

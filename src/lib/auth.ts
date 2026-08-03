@@ -1,39 +1,33 @@
-import { User } from '@/types';
+import { jwtDecode } from 'jwt-decode';
 
-export const setAuthToken = (token: string) => {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('yourrent_token', token);
-    document.cookie = `yourrent_token=${token}; path=/; max-age=86400; SameSite=Lax`;
-  }
-};
+export interface CustomJwtPayload {
+  id: string;
+  email: string;
+  role: 'TENANT' | 'LANDLORD' | 'ADMIN';
+  exp: number; // Expiration time in seconds
+  iat?: number;
+}
 
-export const getAuthToken = (): string | null => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('yourrent_token');
+export function getDecodedToken(token: string | null): CustomJwtPayload | null {
+  if (!token) return null;
+  try {
+    return jwtDecode<CustomJwtPayload>(token);
+  } catch (error) {
+    console.error('Failed to decode JWT token:', error);
+    return null;
   }
-  return null;
-};
+}
 
-export const setUserSession = (user: User) => {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('yourrent_user', JSON.stringify(user));
-    document.cookie = `yourrent_role=${user.role}; path=/; max-age=86400; SameSite=Lax`;
-  }
-};
 
-export const getUserSession = (): User | null => {
-  if (typeof window !== 'undefined') {
-    const raw = localStorage.getItem('yourrent_user');
-    return raw ? JSON.parse(raw) : null;
-  }
-  return null;
-};
+export function isTokenValid(token: string | null): boolean {
+  const decoded = getDecodedToken(token);
+  if (!decoded || !decoded.exp) return false;
 
-export const clearAuth = () => {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('yourrent_token');
-    localStorage.removeItem('yourrent_user');
-    document.cookie = 'yourrent_token=; path=/; max-age=0;';
-    document.cookie = 'yourrent_role=; path=/; max-age=0;';
-  }
-};
+  const currentTimeInSeconds = Math.floor(Date.now() / 1000);
+  return decoded.exp > currentTimeInSeconds;
+}
+
+export function getUserRoleFromToken(token: string | null): string | null {
+  const decoded = getDecodedToken(token);
+  return decoded ? decoded.role : null;
+}

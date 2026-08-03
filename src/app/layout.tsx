@@ -1,30 +1,28 @@
-import { Geist, Geist_Mono, Roboto } from "next/font/google"
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import '@/app/globals.css';
+import { Navbar } from '@/components/shared/Navbar';
+import { AuthProvider } from '@/context/AuthContext';
+import { ToastProvider } from '@/context/ToastContext';
 
-import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
-import { cn } from "@/lib/utils";
+const inter = Inter({ subsets: ['latin'] });
 
-const roboto = Roboto({subsets:['latin'],variable:'--font-sans'})
+export const metadata: Metadata = {
+  title: 'RentNest | Rental Property Marketplace',
+  description: 'Find your perfect rental home easily.',
+};
 
-const fontMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-})
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="en"
-      suppressHydrationWarning
-      className={cn("antialiased", fontMono.variable, "font-sans", roboto.variable)}
-    >
-      <body>
-        <ThemeProvider>{children}</ThemeProvider>
+    <html lang="en">
+      <body className={`${inter.className} bg-slate-50 text-slate-900 min-h-screen flex flex-col`}>
+        <AuthProvider>
+          <ToastProvider>
+            <Navbar />
+            <main className="flex-1">{children}</main>
+          </ToastProvider>
+        </AuthProvider>
       </body>
     </html>
-  )
+  );
 }

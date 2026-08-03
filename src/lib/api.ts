@@ -1,10 +1,12 @@
-import Cookies from 'js-cookie';
+import { getAuthToken } from './auth';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
-export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const token = Cookies.get('accessToken');
-
+export async function fetcher<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const token = getAuthToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
@@ -14,16 +16,16 @@ export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): 
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${BASE_URL}${endpoint}`, {
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers,
   });
 
-  const responseData = await res.json();
+  const data = await response.json().catch(() => ({}));
 
-  if (!res.ok) {
-    throw new Error(responseData.message || 'An error occurred while fetching data.');
+  if (!response.ok) {
+    throw new Error(data.message || data.error || 'An unexpected API error occurred.');
   }
 
-  return responseData.data;
+  return data as T;
 }

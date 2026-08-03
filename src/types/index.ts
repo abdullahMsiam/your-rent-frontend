@@ -1,15 +1,12 @@
-export type Role = 'TENANT' | 'LANDLORD' | 'ADMIN';
-export type UserStatus = 'ACTIVE' | 'BLOCKED';
-export type RequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
+export type UserRole = 'TENANT' | 'LANDLORD' | 'ADMIN';
 
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: Role;
-  status: UserStatus;
+  role: UserRole;
   phoneNumber?: string;
-  avatar?: string;
+  status?: 'ACTIVE' | 'BLOCKED';
 }
 
 export interface Category {
@@ -27,32 +24,33 @@ export interface Property {
   price: number;
   bedrooms: number;
   bathrooms: number;
-  isAvailable: boolean;
   amenities: string[];
   images: string[];
-  landlordId: string;
   categoryId: string;
   category?: Category;
-  landlord?: Partial<User>;
+  isAvailable?: boolean;
 }
+
+export type RentalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'ACTIVE' | 'COMPLETED';
 
 export interface RentalRequest {
   id: string;
-  tenantId: string;
   propertyId: string;
-  status: RequestStatus;
+  property: Property;
+  tenantId: string;
+  tenant?: User;
   moveInDate: string;
   duration: number;
-  totalAmount: number;
-  property: Property;
-  tenant?: User;
+  notes?: string;
+  status: RentalStatus;
+  totalAmount?: number;
+  createdAt?: string;
 }
 
-export interface Payment {
+export interface Review {
   id: string;
-  amount: number;
-  transactionId: string;
-  status: 'PENDING' | 'COMPLETED' | 'FAILED';
-  createdAt: string;
-  rentalRequest: RentalRequest;
+  propertyId: string;
+  rating: number;
+  comment: string;
+  createdAt?: string;
 }

@@ -1,8 +1,8 @@
 import Cookies from 'js-cookie';
 import { isTokenValid } from './auth';
 
-const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://your-rent-bk-gamma.vercel.app/api';
-const BASE_URL = rawApiUrl.replace(/\/+$/, '');
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://your-rent-bk-gamma.vercel.app/api';
+
 
 export async function fetchApi<T>(
   endpoint: string,

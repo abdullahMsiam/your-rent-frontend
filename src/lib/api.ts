@@ -1,10 +1,8 @@
 import Cookies from 'js-cookie';
 import { isTokenValid } from './auth';
 
-// 1. Production Fallback URL (Your Vercel Backend)
 const DEFAULT_API_URL = 'https://your-rent-bk-gamma.vercel.app/api';
 
-// 2. Safe Base URL Resolver
 const getBaseUrl = (): string => {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
   
@@ -13,7 +11,6 @@ const getBaseUrl = (): string => {
     return DEFAULT_API_URL;
   }
   
-  // Remove trailing slashes if any (e.g. "https://domain.com/api/" -> "https://domain.com/api")
   return envUrl.replace(/\/+$/, '');
 };
 
@@ -23,15 +20,12 @@ export async function fetchApi<T>(
 ): Promise<T> {
   const baseUrl = getBaseUrl();
 
-  // Ensure endpoint always starts with exactly one leading slash
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
 
-  // Construct absolute URL safely
   const url = `${baseUrl}${cleanEndpoint}`;
 
   const token = Cookies.get('accessToken');
 
-  // Client-side Token Expiration Pre-Check
   if (token && !isTokenValid(token)) {
     Cookies.remove('accessToken', { path: '/' });
     Cookies.remove('userRole', { path: '/' });
@@ -55,7 +49,6 @@ export async function fetchApi<T>(
     headers,
   });
 
-  // Handle Backend Verification Failures (401 / 403)
   if (res.status === 401 || res.status === 403) {
     Cookies.remove('accessToken', { path: '/' });
     Cookies.remove('userRole', { path: '/' });

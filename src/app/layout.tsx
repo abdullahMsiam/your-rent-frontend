@@ -4,6 +4,7 @@ import '@/app/globals.css';
 import { Navbar } from '@/components/shared/Navbar';
 import { AuthProvider } from '@/context/AuthContext';
 import { ToastProvider } from '@/context/ToastContext';
+import Footer from '@/components/shared/Footer';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -20,6 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ToastProvider>
             <Navbar />
             <main className="flex-1">{children}</main>
+            <Footer/>
           </ToastProvider>
         </AuthProvider>
       </body>

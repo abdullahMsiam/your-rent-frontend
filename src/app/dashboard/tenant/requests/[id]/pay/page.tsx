@@ -18,7 +18,6 @@ export default function InitiatePaymentPage() {
         body: JSON.stringify({ rentalRequestId: id }),
       });
 
-      // ⚡ Safely extract paymentUrl from nested structures (res.data or res)
       const paymentUrl =
         res?.paymentUrl ||
         res?.data?.paymentUrl ||

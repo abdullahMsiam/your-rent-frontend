@@ -34,11 +34,8 @@ export default function TenantDashboardPage() {
     setLoading(true);
     setError('');
     try {
-      // Calls GET /rental-requests (or update endpoint if mounted under /rentals)
       const response = await fetchApi<any>('/rentals');
 
-      // Safe normalization for response structures:
-      // Handles direct array [...], { data: [...] }, or { result: [...] }
       const items = Array.isArray(response)
         ? response
         : response?.data || response?.requests || [];

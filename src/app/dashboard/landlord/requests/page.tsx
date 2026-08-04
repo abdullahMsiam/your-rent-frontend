@@ -40,16 +40,13 @@ export default function LandlordRequestsPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [error, setError] = useState('');
 
-  // 1. Fetch rental applications submitted to this landlord
   const loadRequests = async () => {
     setLoading(true);
     setError('');
 
     try {
-      // Endpoint: GET /rental-requests (backend checks auth token for LANDLORD role)
       const response = await fetchApi<any>('/rentals');
 
-      // Safe Data Extraction (handles arrays, { data: [...] }, or { requests: [...] })
       const items = Array.isArray(response)
         ? response
         : response?.data || response?.requests || [];
@@ -67,19 +64,15 @@ export default function LandlordRequestsPage() {
     loadRequests();
   }, []);
 
-  // 2. Handle Approve / Reject Actions
   const handleStatusUpdate = async (requestId: string, newStatus: 'APPROVED' | 'REJECTED') => {
     setUpdatingId(requestId);
     setError('');
 
     try {
-      // Calls PATCH or PUT /rental-requests/:id or /rental-requests/:id/status
       await fetchApi(`/rentals/landlord/${requestId}`, {
         method: 'PATCH',
         body: JSON.stringify({ status: newStatus }),
       });
-
-      // Update state locally for instant feedback
       setRequests((prev) =>
         prev.map((req) => (req.id === requestId ? { ...req, status: newStatus } : req))
       );

@@ -4,7 +4,7 @@ export interface CustomJwtPayload {
   id: string;
   email: string;
   role: 'TENANT' | 'LANDLORD' | 'ADMIN';
-  exp: number; // Expiration time in seconds
+  exp: number;
   iat?: number;
 }
 

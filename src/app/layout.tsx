@@ -8,7 +8,7 @@ import { ToastProvider } from '@/context/ToastContext';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'RentNest | Rental Property Marketplace',
+  title: 'Your Rent | Rental Property Marketplace',
   description: 'Find your perfect rental home easily.',
 };
 
